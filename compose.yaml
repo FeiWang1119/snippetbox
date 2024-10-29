@@ -1,0 +1,41 @@
+# name: snippetbox
+
+services:
+  backend:
+    build: .
+    container_name: go-backend
+    ports:
+      - "8888:8888"
+    networks:
+      - backend
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql
+    container_name: mysql-db
+    ports:
+      - "3306:3306"
+    command: --init-file /data/application/init.sql
+    restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
+    volumes:
+      - ./init.sql:/data/application/init.sql
+      - db-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: fei
+    networks:
+      backend:
+        ipv4_address: 172.20.0.2
+
+networks:
+  backend:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+volumes:
+  db-data:
