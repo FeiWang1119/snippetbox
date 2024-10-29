@@ -64,6 +64,10 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
         app.serverError(w, err)
         return
     }
+
+	// Create an instance of a templateData struct holding the snippet data.
+	data := &templateData{Snippet: s}
+
 	// Initiallize a slice containing the paths to the show.page.tmpl file,
 	// plus the base layout and footer partials that we made earlier.
 	files := []string{
@@ -81,7 +85,7 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 
 	// And then execute them, Notice how we are passing in the snippets
 	// data (a models.Snippet struct) as the final parameter.
-	err = ts.Execute(w, s)
+	err = ts.Execute(w, data)
 	if err != nil {
 		app.serverError(w, err)
 	}

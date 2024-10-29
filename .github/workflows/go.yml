@@ -15,15 +15,18 @@ jobs:
       uses: actions/setup-go@v4
       with:
         go-version: '1.23'
+        cache-dependency-path: ./go.sum
 
     - name: Build
       run: go build -v ./...
 
-  test:
+  docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Build the stack
-        run: docker-compose up -d
-      - name: Test
-        run: docker run --network container:webapp-frontend appropriate/curl -s --retry 10 --retry-connrefused http://localhost:8888/
+      # Check out the repository
+      - uses: actions/checkout@v4
+
+      # Run Docker Compose Action
+      - uses: adambirds/docker-compose-action@v1.5.0
+        with:
+          compose-file: "./docker-compose.yml"
