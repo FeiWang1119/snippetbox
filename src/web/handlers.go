@@ -4,8 +4,8 @@ import (
 	"fmt"
 	// "html/template"
 	"net/http"
-	"strconv"
 	"snippetbox/src/pkg/models"
+	"strconv"
 )
 
 // Change the signature of the home handler so it is defined as a method against
@@ -23,7 +23,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Use the render() helper.
-	app.render(w, r, "home.page.tmpl", &templateData{Snippets: s})
+	app.render(w, r, "home.page.html", &templateData{Snippets: s})
 
 	// Create an instance of a templateData struct holding the slice of snippets.
 	//
@@ -34,9 +34,9 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	// Include the footer partial in the template files.
 	//
 	// files := []string{
-	// 	"./ui/html/home.page.tmpl",
-	// 	"./ui/html/base.layout.tmpl",
-	// 	"./ui/html/footer.partial.tmpl",
+	// 	"./ui/html/home.page.html",
+	// 	"./ui/html/base.layout.html",
+	// 	"./ui/html/footer.partial.html",
 	// }
 
 	// Use the template.ParseFiles()) function to read the template file into a template set.
@@ -70,31 +70,31 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Use the SnippetModel object's Get method to retrieve the data for a
-    // specific record based on its ID. If no matching record is found,
-    // return a 404 Not Found response.
-    s, err := app.snippets.Get(id)
-    if err == models.ErrNoRecord {
-        app.notFound(w)
-        return
-    } else if err != nil {
-        app.serverError(w, err)
-        return
-    }
+	// specific record based on its ID. If no matching record is found,
+	// return a 404 Not Found response.
+	s, err := app.snippets.Get(id)
+	if err == models.ErrNoRecord {
+		app.notFound(w)
+		return
+	} else if err != nil {
+		app.serverError(w, err)
+		return
+	}
 
 	// Use the render() helper.
-	app.render(w, r, "show.page.tmpl", &templateData{Snippet: s})
+	app.render(w, r, "show.page.html", &templateData{Snippet: s})
 
 	// Create an instance of a templateData struct holding the snippet data.
 	//
 	// data := &templateData{Snippet: s}
 
-	// Initiallize a slice containing the paths to the show.page.tmpl file,
+	// Initiallize a slice containing the paths to the show.page.html file,
 	// plus the base layout and footer partials that we made earlier.
 	//
 	// files := []string{
-	// 	"./ui/html/show.page.tmpl",
-	// 	"./ui/html/base.layout.tmpl",
-	// 	"./ui/html/footer.partial.tmpl",
+	// 	"./ui/html/show.page.html",
+	// 	"./ui/html/base.layout.html",
+	// 	"./ui/html/footer.partial.html",
 	// }
 
 	// Parse the template files...
