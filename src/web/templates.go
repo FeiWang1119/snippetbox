@@ -3,6 +3,7 @@ package main
 import (
 	"html/template"
 	"path/filepath"
+	"time"
 
 	"snippetbox/src/pkg/models"
 )
@@ -14,6 +15,19 @@ import (
 type templateData struct {
 	Snippet  *models.Snippet
 	Snippets []*models.Snippet
+}
+
+// Create a humanDate function which returns a nicely formatted string
+// representation of a time.Time object.
+func humanDate(t time.Time) string {
+	return t.Format("02 Jan 2006 at 15:04")
+}
+
+// Initialize a template.FuncMap object and store it in a global variable. This
+// essentially a string-keyed map which acts as a lookup between the names of the
+// custom template functions and the functions themselves.
+var functions = template.FuncMap{
+	"humanDate": humanDate,
 }
 
 func newTemplateCache(dir string) (map[string]*template.Template, error) {
@@ -34,11 +48,20 @@ func newTemplateCache(dir string) (map[string]*template.Template, error) {
 		// and assign it to the name variable.
 		name := filepath.Base(page)
 
-		// Parse the page template file in to a template set.
-		ts, err := template.ParseFiles(page)
+		// The template.FuncMap must be registered with the template set before
+		// call the ParseFiles() method. This means we have to use template.New
+		// create an empty template set, use the Funcs() method to register the
+		// template.FuncMap, and then parse the file as normal.
+		ts, err := template.New(name).Funcs(functions).ParseFiles(page)
 		if err != nil {
 			return nil, err
 		}
+
+		// Parse the page template file in to a template set.
+		// ts, err := template.ParseFiles(page)
+		// if err != nil {
+		// 	return nil, err
+		// }
 
 		// Use the ParseGlob method to add any 'layout' templates to the
 		// template set (in our case, it's just the 'base' layout at the
