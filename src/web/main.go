@@ -25,7 +25,9 @@ type application struct {
 	templateCache map[string]*template.Template
 }
 
-func (app *application) routes() *http.ServeMux {
+// Update the signature for the routes() method so that it returns a
+// http.Handler instead of *http.ServeMux.
+func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", app.home)
 	mux.HandleFunc("/snippet", app.showSnippet)
@@ -40,7 +42,13 @@ func (app *application) routes() *http.ServeMux {
 	// "/static/" prefix before the request reaches the file server.
 	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
-	return mux
+	// Pass the servemux as the 'next' parameter to the secureHeaders middleware
+	// Because secureHeaders is just a function, and the function returns a
+	// http.Handler we don't need to do anything else.
+	// return secureHeaders(mux)
+	
+	// Wrap the existing chain with the logRequest middleware.
+	return app.logRequest(secureHeaders(mux))
 }
 
 func main() {
@@ -93,9 +101,9 @@ func main() {
 	// Initialize a mysql.SnippetModel instance and add it to the application
 	// dependencies.
 	app := &application{
-		errorLog: errorLog,
-		infoLog:  infoLog,
-		snippets: &mysql.SnippetModel{DB: db},
+		errorLog:      errorLog,
+		infoLog:       infoLog,
+		snippets:      &mysql.SnippetModel{DB: db},
 		templateCache: templateCache,
 	}
 
