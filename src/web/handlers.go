@@ -11,10 +11,14 @@ import (
 // Change the signature of the home handler so it is defined as a method against
 // *application.
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		app.notFound(w) // Use the notFound() helper.
-		return
-	}
+	// Because Pat matches the "/" path exactly, we can now remove the manual check
+	// of r.URL.Path != "/" from this handler.
+	// if r.URL.Path != "/" {
+	//  app.notFound(w) // Use the notFound() helper.
+	//  return
+	// }
+
+	// panic("oops! something went wrong")
 
 	s, err := app.snippets.Latest()
 	if err != nil {
@@ -63,7 +67,9 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 // Change the signature of the showSnippet handler so it is defined as a method against
 // *application.
 func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	// Pat doesn't strip the colon from the named capture key, so we need to 
+	// get the value of ":id" from the query string instead of "id".
+	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
 	if err != nil || id < 1 {
 		app.notFound(w) // Use the notFound() helper.
 		return
@@ -114,14 +120,20 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 	// }
 }
 
+// Add a new createSnippetForm handler, which for now returns a placeholder response.
+func (app *application) createSnippetForm(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Create a new snippet..."))
+}
+
 // Change the signature of the createSnippet handler so it is defined as a method against
 // *application.
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		w.Header().Set("Allow", "POST")
-		app.clientError(w, http.StatusMethodNotAllowed) // Use the clientError() helper.
-		return
-	}
+	// The check of r.Method != "POST" is now superfluous and can be removed.
+	// if r.Method != "POST" {
+	// 	w.Header().Set("Allow", "POST")
+	// 	app.clientError(w, http.StatusMethodNotAllowed) // Use the clientError() helper.
+	// 	return
+	// }
 
 	// Create some variables holding dummy data. We'll remove these later on
 	// during the build.
@@ -138,5 +150,7 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Redirect the user to the relevant page for the snippet.
-	http.Redirect(w, r, fmt.Sprintf("/snippet?id=%d", id), http.StatusSeeOther)
+	// http.Redirect(w, r, fmt.Sprintf("/snippet?id=%d", id), http.StatusSeeOther)
+	// Change the redirect to use the new semantic URL style of /snippet/:id
+	http.Redirect(w, r, fmt.Sprintf("/snippet/%d", id), http.StatusSeeOther)
 }
