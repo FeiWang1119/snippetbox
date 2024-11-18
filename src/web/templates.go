@@ -2,6 +2,7 @@ package main
 
 import (
 	"html/template"
+	"net/url"
 	"path/filepath"
 	"time"
 
@@ -13,8 +14,11 @@ import (
 // At the moment it only contains one field, but we'll add more
 // to it as the build progresses.
 type templateData struct {
-	Snippet  *models.Snippet
-	Snippets []*models.Snippet
+	CurrentYear int
+	FormData    url.Values
+	FormErrors  map[string]string
+	Snippet     *models.Snippet
+	Snippets    []*models.Snippet
 }
 
 // Create a humanDate function which returns a nicely formatted string
