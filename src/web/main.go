@@ -7,11 +7,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"snippetbox/src/pkg/models/mysql"
 
-	_ "github.com/go-sql-driver/mysql" // New import
 	"github.com/bmizerany/pat"
+	_ "github.com/go-sql-driver/mysql" // New import
+	"github.com/golangcollege/sessions"
 	"github.com/justinas/alice"
 )
 
@@ -23,6 +25,7 @@ import (
 type application struct {
 	errorLog      *log.Logger
 	infoLog       *log.Logger
+	session       *sessions.Session
 	snippets      *mysql.SnippetModel
 	templateCache map[string]*template.Template
 }
@@ -34,15 +37,27 @@ func (app *application) routes() http.Handler {
 	// which will be used for every request our application receives.
 	standardMiddleware := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 
+	// Create a new middleware chain containing the middleware specific to
+	// our dynamic application routes. For now, this chain will only contain
+	// the session middleware but we'll add more to it later.
+	dynamicMiddleware := alice.New(app.session.Enable)
+
 	// mux := http.NewServeMux()
 	// mux.HandleFunc("/", app.home)
 	// mux.HandleFunc("/snippet", app.showSnippet)
 	// mux.HandleFunc("/snippet/create", app.createSnippet)
 	mux := pat.New()
-	mux.Get("/", http.HandlerFunc(app.home))
-	mux.Get("/snippet/create", http.HandlerFunc(app.createSnippetForm))
-	mux.Post("/snippet/create", http.HandlerFunc(app.createSnippet))
-	mux.Get("/snippet/:id", http.HandlerFunc(app.showSnippet))
+	// mux.Get("/", http.HandlerFunc(app.home))
+	// mux.Get("/snippet/create", http.HandlerFunc(app.createSnippetForm))
+	// mux.Post("/snippet/create", http.HandlerFunc(app.createSnippet))
+	// mux.Get("/snippet/:id", http.HandlerFunc(app.showSnippet))
+	
+	// Update these routes to use the new dynamic middleware chain followed
+	// by the appropriate handler function. 
+	mux.Get("/", dynamicMiddleware.ThenFunc(app.home))
+	mux.Get("/snippet/create", dynamicMiddleware.ThenFunc(app.createSnippetForm))
+	mux.Post("/snippet/create", dynamicMiddleware.ThenFunc(app.createSnippet))
+	mux.Get("/snippet/:id", dynamicMiddleware.ThenFunc(app.showSnippet))
 
 	// Create a file server which serves files out of the "./ui/static" directory.
 	// Note that the path given to the http.Dir function is relative to the project
@@ -58,13 +73,13 @@ func (app *application) routes() http.Handler {
 	// Because secureHeaders is just a function, and the function returns a
 	// http.Handler we don't need to do anything else.
 	// return secureHeaders(mux)
-	
+
 	// Wrap the existing chain with the logRequest middleware.
 	// return app.logRequest(secureHeaders(mux))
-	
+
 	// Wrap the existing chain with the recoverPanic middleware.
 	// return app.recoverPanic(app.logRequest(secureHeaders(mux)))
-	
+
 	// Return the 'standard' middleware chain followed by the servemux.
 	return standardMiddleware.Then(mux)
 }
@@ -78,6 +93,11 @@ func main() {
 
 	// Define a new command-line flag for the MySQL DSN string.
 	dsn := flag.String("dsn", "fei:fei@tcp(172.20.0.2)/snippetbox?parseTime=true", "MySQL data")
+
+	// Define a new command-line flag for the session secret (a random key whic
+	// will be used to encrypt and authenticate session cookies). It should be
+	// bytes long.
+	secret := flag.String("secret", "s6Ndh+pPbnzHbS*+9Pk8qGWhTzbpa@ge", "Secret key")
 
 	// Importantly, we use the flag.Parse() function to parse the command-line
 	// This reads in the command-line flag value and assigns it to the addr variable.
@@ -106,6 +126,12 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
+	// Use the sessions.New() function to initialize a new session manager,
+	// passing in the secret key as the parameter. Then we configure it so
+	// sessions always expires after 12 hours.
+	session := sessions.New([]byte(*secret))
+	session.Lifetime = 12 * time.Hour
+
 	// We also defer a call to db.Close(), so that the connection pool is closed
 	// before the main() function exits.
 	defer db.Close()
@@ -121,6 +147,7 @@ func main() {
 	app := &application{
 		errorLog:      errorLog,
 		infoLog:       infoLog,
+		session:       session,
 		snippets:      &mysql.SnippetModel{DB: db},
 		templateCache: templateCache,
 	}
