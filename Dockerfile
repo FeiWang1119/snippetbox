@@ -2,19 +2,22 @@ FROM golang AS development
 
 WORKDIR /snippetbox
 
-COPY /src/ /snippetbox/src
+COPY /cmd/ /snippetbox/cmd
+COPY /pkg/ /snippetbox/pkg
+COPY /ui/ /snippetbox/ui
+COPY /tls/ /snippetbox/tls
 
 RUN go mod init snippetbox
 RUN go mod tidy
-RUN go build -o /snippetbox/snippetbox ./src/web/*.go
-
+RUN go build -o /snippetbox/snippetbox ./cmd/web/*.go
 
 FROM debian AS builder
 
 WORKDIR /
 
 COPY --from=development /snippetbox/snippetbox /usr/bin/snippetbox
-COPY /src/ui /ui
+COPY /ui /ui
+COPY /tls /tls
 
 EXPOSE 8888
 
