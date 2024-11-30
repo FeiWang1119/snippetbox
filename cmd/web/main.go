@@ -2,7 +2,7 @@ package main
 
 import (
 	"crypto/tls"
-	"database/sql" // New import
+	"database/sql"
 	"flag"
 	"html/template"
 	"log"
@@ -12,9 +12,13 @@ import (
 
 	"snippetbox/pkg/models/mysql"
 
-	_ "github.com/go-sql-driver/mysql" // New import
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/golangcollege/sessions"
 )
+
+type contextKey string
+
+var contextKeyUser = contextKey("user")
 
 // Define an application struct to hold the application-wide dependencies for the
 // web application. For now we'll only include fields for the two custom loggers
